@@ -580,8 +580,6 @@ export const eras: Era[] = [
 export const latestVersion =
   eras[0].releases[0].patches?.at(-1)?.version ?? eras[0].releases[0].version;
 
-// Published @open-slide/core versions, previews and betas included.
-export const coreReleaseCount = 68;
 export const contributorCount = new Set(
   eras.flatMap((era) => era.releases.flatMap((release) => release.contributors ?? [])),
 ).size;

@@ -3,7 +3,8 @@ import { Timeline } from '@/components/changelog/timeline';
 import { Footer } from '@/components/landing/footer';
 import { Nav } from '@/components/landing/nav';
 import { ScrollReveal } from '@/components/landing/scroll-reveal';
-import { contributorCount, coreReleaseCount, eras, latestVersion } from '@/lib/changelog';
+import { contributorCount, eras, latestVersion } from '@/lib/changelog';
+import { coreDir, readCoreRelease } from '@/lib/changelog-source';
 import { fetchGitHubStars, formatStarCount } from '@/lib/github';
 import { gitConfig } from '@/lib/shared';
 
@@ -23,9 +24,10 @@ export default async function ChangelogPage() {
   const stars = await fetchGitHubStars();
   const githubStars = stars !== null ? formatStarCount(stars) : null;
 
+  const { releaseCount } = readCoreRelease(coreDir);
   const stats = [
     { value: `v${latestVersion}`, label: 'Latest release' },
-    { value: String(coreReleaseCount), label: 'Releases' },
+    { value: String(releaseCount), label: 'Releases' },
     { value: String(contributorCount), label: 'Contributors' },
     { value: 'Apr 19, 2026', label: 'First commit' },
   ];
