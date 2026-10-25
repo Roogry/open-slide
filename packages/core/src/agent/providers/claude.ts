@@ -175,8 +175,10 @@ export function createClaudeProvider(): AgentProvider {
     name: 'Claude Code',
     sdkPackage: CLAUDE_SDK_PACKAGE,
     cliCommand: 'claude',
+    installCommand: 'npm install -g @anthropic-ai/claude-code',
     askInstruction: 'Ask the user questions with the AskUserQuestion tool, never as plain text.',
     canRewind: true,
+    disabledSettings: [],
     async models() {
       return CLAUDE_MODELS;
     },

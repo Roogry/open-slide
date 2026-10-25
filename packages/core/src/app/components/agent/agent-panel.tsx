@@ -40,12 +40,13 @@ import {
 import { format, plural, useLocale } from '@/lib/use-locale';
 import { cn } from '@/lib/utils';
 import { applyCommentsPrompt } from '../../../agent/prompt';
-import type {
-  AgentEffort,
-  AgentModelOption,
-  AgentProviderId,
-  AgentTurnContext,
-  RespondPayload,
+import {
+  AGENT_EFFORTS,
+  type AgentEffort,
+  type AgentModelOption,
+  type AgentProviderId,
+  type AgentTurnContext,
+  type RespondPayload,
 } from '../../../agent/types';
 import { Composer, ContextChip } from './composer';
 import { ConnectView } from './connect-view';
@@ -354,6 +355,105 @@ export function AgentPanel({
   );
 }
 
+function EffortPicker({
+  providerId,
+  providerName,
+  modelId,
+  efforts,
+  selected,
+  disabled,
+}: {
+  providerId: AgentProviderId;
+  providerName: string;
+  modelId: string;
+  efforts: readonly AgentEffort[];
+  selected: AgentEffort | null;
+  disabled: boolean;
+}) {
+  const t = useLocale();
+  return (
+    <div className={cn('mt-1.5 border-t border-hairline px-1 pt-2 pb-1', disabled && 'opacity-50')}>
+      <div className="mb-1.5 px-1 text-[11px] font-medium text-muted-foreground">
+        {t.agent.reasoning}
+        {disabled ? ` · ${format(t.agent.settingUnavailable, { name: providerName })}` : ''}
+      </div>
+      <div className="flex gap-0.5 rounded-[6px] bg-muted p-0.5">
+        {([null, ...efforts] as (AgentEffort | null)[]).map((e) => {
+          const checked = !disabled && e === selected;
+          return (
+            <button
+              key={e ?? 'auto'}
+              type="button"
+              aria-pressed={checked}
+              disabled={disabled}
+              title={
+                disabled ? format(t.agent.settingUnavailable, { name: providerName }) : undefined
+              }
+              onClick={() => {
+                if (disabled) return;
+                setModelChoice(providerId, { model: modelId, effort: e });
+              }}
+              className={cn(
+                'h-6 min-w-0 flex-1 truncate rounded-[4px] px-1 text-[11.5px] text-muted-foreground outline-none transition-colors duration-100 hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/30 disabled:cursor-not-allowed disabled:hover:text-muted-foreground',
+                checked && 'bg-background font-medium text-foreground shadow-edge',
+              )}
+            >
+              {e ? t.agent.efforts[e] : t.agent.effortAuto}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function ApprovalSwitch({
+  checked,
+  disabled,
+  providerName,
+}: {
+  checked: boolean;
+  disabled: boolean;
+  providerName: string;
+}) {
+  const t = useLocale();
+  const hint = disabled
+    ? format(t.agent.approvalUnavailable, { name: providerName })
+    : t.agent.autoApproveHint;
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      aria-disabled={disabled}
+      disabled={disabled}
+      title={hint}
+      onClick={() => {
+        if (!disabled) setAutoApprove(!checked);
+      }}
+      className={cn(
+        'flex h-7 items-center justify-between gap-2 rounded-[5px] px-2 text-[12.5px] outline-none transition-colors duration-100 hover:bg-muted focus-visible:bg-muted disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent',
+      )}
+    >
+      {t.agent.autoApprove}
+      <span
+        aria-hidden
+        className={cn(
+          'relative h-4 w-7 shrink-0 rounded-full transition-colors duration-150',
+          checked && !disabled ? 'bg-foreground' : 'bg-foreground/15',
+        )}
+      >
+        <span
+          className={cn(
+            'absolute top-0.5 left-0.5 size-3 rounded-full bg-background shadow-sm transition-transform duration-150',
+            checked && !disabled && 'translate-x-3',
+          )}
+        />
+      </span>
+    </button>
+  );
+}
+
 function modelLabel(model: AgentModelOption, t: ReturnType<typeof useLocale>): string {
   return model.id ? model.label : t.agent.modelDefault;
 }
@@ -410,7 +510,7 @@ function ModelMenu({
         )}
         <ChevronDown className="size-3 text-muted-foreground" aria-hidden />
       </PopoverTrigger>
-      <PopoverContent align="start" className="w-[272px] p-1.5" data-agent-model-menu>
+      <PopoverContent align="start" className="w-[320px] p-1.5" data-agent-model-menu>
         {providers.length > 1 && (
           <div role="tablist" className="mb-1.5 flex gap-0.5 rounded-[6px] bg-muted p-0.5">
             {providers.map((p) => (
@@ -435,12 +535,14 @@ function ModelMenu({
         {shown && !shown.ready ? (
           <div className="flex flex-col items-start gap-2 px-2 py-2.5">
             <p className="text-[12px] leading-relaxed text-muted-foreground">
-              {shown.cliFound
-                ? format(t.agent.connectInstallHint, {
-                    pkg: shown.sdkPackage,
-                    pm: status?.packageManager ?? 'npm',
-                  })
-                : format(t.agent.cliHint, { name: shown.name })}
+              {shown.signedIn === false
+                ? t.agent.cliSignedOutHint
+                : shown.cliFound
+                  ? format(t.agent.connectInstallHint, {
+                      pkg: shown.sdkPackage ?? shown.cliCommand,
+                      pm: status?.packageManager ?? 'npm',
+                    })
+                  : format(t.agent.cliHint, { name: shown.name })}
             </p>
             <Button
               size="xs"
@@ -481,59 +583,30 @@ function ModelMenu({
           </div>
         ) : null}
 
-        {shown?.ready && selectedModel && selectedModel.efforts.length > 0 && (
-          <div className="mt-1.5 border-t border-hairline px-1 pt-2 pb-1">
-            <div className="mb-1.5 px-1 text-[11px] font-medium text-muted-foreground">
-              {t.agent.reasoning}
-            </div>
-            <div className="flex gap-0.5 rounded-[6px] bg-muted p-0.5">
-              {([null, ...selectedModel.efforts] as (AgentEffort | null)[]).map((e) => {
-                const checked = e === selectedEffort;
-                return (
-                  <button
-                    key={e ?? 'auto'}
-                    type="button"
-                    aria-pressed={checked}
-                    onClick={() => setModelChoice(shown.id, { model: selectedModel.id, effort: e })}
-                    className={cn(
-                      'h-6 min-w-0 flex-1 truncate rounded-[4px] px-1 text-[11.5px] text-muted-foreground outline-none transition-colors duration-100 hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/30',
-                      checked && 'bg-background font-medium text-foreground shadow-edge',
-                    )}
-                  >
-                    {e ? t.agent.efforts[e] : t.agent.effortAuto}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        )}
+        {shown?.ready &&
+          selectedModel &&
+          (selectedModel.efforts.length > 0 || shown.disabledSettings.includes('effort')) && (
+            <EffortPicker
+              providerId={shown.id}
+              providerName={shown.name}
+              modelId={selectedModel.id}
+              efforts={
+                shown.disabledSettings.includes('effort')
+                  ? [...AGENT_EFFORTS]
+                  : selectedModel.efforts
+              }
+              selected={selectedEffort}
+              disabled={shown.disabledSettings.includes('effort')}
+            />
+          )}
 
         <div className="mt-1.5 flex flex-col gap-px border-t border-hairline pt-1.5">
           {readyProviders(status).length > 0 && (
-            <button
-              type="button"
-              role="switch"
-              aria-checked={autoApprove}
-              title={t.agent.autoApproveHint}
-              onClick={() => setAutoApprove(!autoApprove)}
-              className="flex h-7 items-center justify-between gap-2 rounded-[5px] px-2 text-[12.5px] outline-none transition-colors duration-100 hover:bg-muted focus-visible:bg-muted"
-            >
-              {t.agent.autoApprove}
-              <span
-                aria-hidden
-                className={cn(
-                  'relative h-4 w-7 shrink-0 rounded-full transition-colors duration-150',
-                  autoApprove ? 'bg-foreground' : 'bg-foreground/15',
-                )}
-              >
-                <span
-                  className={cn(
-                    'absolute top-0.5 left-0.5 size-3 rounded-full bg-background shadow-sm transition-transform duration-150',
-                    autoApprove && 'translate-x-3',
-                  )}
-                />
-              </span>
-            </button>
+            <ApprovalSwitch
+              checked={autoApprove}
+              disabled={shown?.disabledSettings.includes('approval') ?? false}
+              providerName={shown?.name ?? ''}
+            />
           )}
           <button
             type="button"

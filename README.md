@@ -43,7 +43,7 @@ The loop: present → comment → `/apply-comments` → repeat.
 
 ### 🧑‍💻 In-app agent panel
 
-Connect your locally installed Claude Code or Codex once and the whole loop moves into the browser: draft a deck, answer the scoping questions as option cards, apply comments with one click, and edit the selected element by describing the change. Without a connected agent the dev server keeps the terminal-driven flow above.
+Connect your locally installed Claude Code, Codex, or Cursor CLI once and the whole loop moves into the browser: draft a deck, answer the scoping questions as option cards, apply comments with one click, and edit the selected element by describing the change. Without a connected agent the dev server keeps the terminal-driven flow above.
 
 ### 🖼️ Assets manager + svgl logo search
 

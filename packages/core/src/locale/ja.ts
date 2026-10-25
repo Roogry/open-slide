@@ -614,9 +614,16 @@ export const ja: Locale = {
     cliMissing: 'PATH に CLI が見つかりません',
     cliHint:
       '{name} CLI をインストールして一度ログインしてください。パネルはそのログインを再利用します。',
-    needCliTitle: '先に Claude Code か Codex をインストールしてください',
+    cliSignedOut: '未ログイン',
+    cliSignedOutHint:
+      'CLI は入っています。ターミナルで一度ログインすれば、パネルはそのログインを再利用します。API キーの入力は不要です。',
+    cliOnlyReady: 'PATH 上の {command} CLI を使います。このワークスペースには何も追加しません。',
+    settingUnavailable: '{name} では使えません',
+    approvalUnavailable:
+      '{name} のヘッドレスモードは編集とコマンドをそのまま実行するため、このスイッチは効きません。',
+    needCliTitle: '先に Claude Code、Codex、または Cursor をインストールしてください',
     needCliDescription:
-      'パネルはこのマシンのコーディングエージェント CLI を操作しますが、PATH に見つかりませんでした。どちらかをインストールしてターミナルで一度ログインし、もう一度確認してください。',
+      'パネルはこのマシンのコーディングエージェント CLI を操作しますが、PATH に見つかりませんでした。インストールしてターミナルで一度ログインし、もう一度確認してください。',
     checkAgain: 'もう一度確認',
     retry: '再試行',
     toastConnected: '{name} を接続しました',

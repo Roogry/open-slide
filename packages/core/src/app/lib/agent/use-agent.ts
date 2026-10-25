@@ -372,7 +372,7 @@ export function autoConnect(): Promise<void> {
   const status = state.status;
   if (!status?.enabled) return Promise.resolve();
   const pending = status.providers.filter(
-    (p) => p.cliFound && !p.ready && !state.connectErrors[p.id],
+    (p) => p.sdkPackage && p.cliFound && !p.ready && !state.connectErrors[p.id],
   );
   if (pending.length === 0) return Promise.resolve();
   autoConnecting = (async () => {

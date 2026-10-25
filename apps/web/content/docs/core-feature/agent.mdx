@@ -1,6 +1,6 @@
 ---
 title: Agent panel
-description: Drive Claude Code or Codex from inside the dev server — create decks, apply comments, and edit the current page without a terminal.
+description: Drive Claude Code, Codex, or Cursor from inside the dev server — create decks, apply comments, and edit the current page without a terminal.
 ---
 
 ![Open-slide agent panel beside the canvas, with Claude Code editing the open deck and its transcript streaming in](/assets/screenshots/agent-panel.webp)
@@ -16,34 +16,63 @@ before.
 
 ## Supported agents
 
-| Agent | SDK installed into your workspace | Uses your login from |
+| Agent | What the panel installs | Uses your login from |
 | --- | --- | --- |
 | [Claude Code](https://code.claude.com) | `@anthropic-ai/claude-agent-sdk` | the `claude` CLI |
 | [Codex](https://developers.openai.com/codex) | `@openai/codex-sdk` | the `codex` CLI |
+| [Cursor](https://cursor.com/docs/cli/overview) | nothing — it runs the CLI directly | the `cursor-agent` CLI |
 
-The panel talks to each agent through its official TypeScript SDK. The SDKs
-are not bundled with `@open-slide/core` — they pull in a native binary — so
-they are added to your workspace as a dev dependency the first time you open
-the panel.
+Claude Code and Codex are driven through their official TypeScript SDKs. The
+SDKs are not bundled with `@open-slide/core` — they pull in a native binary —
+so they are added to your workspace as a dev dependency the first time you
+open the panel.
 If the matching CLI is on your `PATH`, the panel points the SDK at it so you
 keep the same version and sign-in you already use in the terminal.
+
+Cursor has no SDK package. The panel spawns the [Cursor CLI](https://cursor.com/docs/cli/overview)
+in [print mode](https://cursor.com/docs/cli/headless) (`--print --output-format stream-json --stream-partial-output`)
+and streams that JSON into the transcript. Install it with the official script,
+which puts both `cursor-agent` and `agent` on your `PATH`:
+
+```bash
+curl https://cursor.com/install -fsS | bash
+```
+
+On Windows, in PowerShell:
+
+```powershell
+irm 'https://cursor.com/install?win32=true' | iex
+```
+
+Sign in once with `cursor-agent login` (or `agent login`). The panel checks
+`cursor-agent status` and reuses that login. It never asks for an API key. A
+`CURSOR_API_KEY` already in the environment is left for the CLI to use.
 
 ## Connect
 
 Press `A` on any slide, or click **Agent** in the toolbar. The first time the
-panel opens, it connects every agent whose CLI is on your `PATH`: the dev
-server runs `pnpm add -D <sdk>` (or your package manager's equivalent) and the
-panel switches to chat as soon as the install finishes. Sign in to the CLI
-once (`claude` or `codex login`); the panel reuses that login.
+panel opens, it connects every agent whose CLI is on your `PATH`. For Claude
+Code and Codex the dev server runs `pnpm add -D <sdk>` (or your package
+manager's equivalent) and the panel switches to chat as soon as the install
+finishes. Cursor is ready as soon as `cursor-agent` is on your `PATH` and
+`cursor-agent status` says you are signed in — if the binary is there but you
+are not signed in, the card shows `cursor-agent login` instead of an install
+button. Sign in to a CLI once (`claude`, `codex login`, or `cursor-agent login`);
+the panel reuses that login.
 
-If neither CLI is installed, the panel shows the install command for each and
+If no CLI is installed, the panel shows the install command for each and
 a **Check again** button instead.
 
-Both agents can be connected. The model menu in the panel header lists each
-connected agent's models (Opus, Sonnet and Haiku for Claude Code; the models
-your Codex CLI offers for Codex) and the reasoning effort the chosen model
-supports. Set `agent: { enabled: false }` in `open-slide.config.ts` to hide
-the panel entirely.
+All three agents can be connected. The model menu in the panel header lists
+each connected agent's models (Opus, Sonnet and Haiku for Claude Code; the
+models your Codex CLI offers for Codex; `cursor-agent --list-models`, plus the
+CLI's own default, for Cursor) and the reasoning effort the chosen model
+supports. Cursor has no reasoning-effort flag the panel can set, so that
+control stays visible and disabled when Cursor is selected. The same is true
+of **Auto-approve**: print mode cannot ask about each command, so the panel
+always passes `--force` and `--trust` and the switch is disabled.
+Set `agent: { enabled: false }` in `open-slide.config.ts` to hide the panel
+entirely.
 
 ## What you can do
 
@@ -55,7 +84,7 @@ the panel entirely.
   draft is done, the deck's `untitled` folder is renamed to a slug the agent
   picks for it.
 - **Apply comments.** Leave comments in the inspector's comment mode, then
-  click **Apply with Claude Code** in the comment island (or the comment chip
+  click **Apply with Claude Code** (or Codex, or Cursor) in the comment island (or the comment chip
   in the composer). The agent resolves every `@slide-comment` marker and the
   page hot-reloads.
 - **Edit the current page.** On a slide, the composer carries the slide, page
@@ -70,6 +99,10 @@ current step. Edits inside the slides and assets folders are applied directly.
 Other actions, such as editing a config file or running a shell command that
 changes state, pause for approval in the panel unless you turn on **Auto-approve** in the provider
 menu. Codex runs inside its own `workspace-write` sandbox and never prompts.
+Cursor's print mode has no per-command approval channel. The panel runs it
+with `--force` and `--trust`, so edits and shell commands apply directly,
+including outside the slides and assets folders. Its project rules and
+`AGENTS.md` still apply.
 Claude Code also loads the project's `.claude/settings.json`, so hooks and
 permission rules defined there apply without the trust prompt the CLI shows.
 Only open the panel in projects you trust.
@@ -81,9 +114,10 @@ conversation; earlier ones stay in history.
 
 Hover a message to copy its text. Your own messages also have an edit
 button: sending the edit replaces everything after that message and runs the
-turn again. Claude Code rewinds its own conversation to that point; Codex can't,
-so it is told to set the old replies aside. Files the agent already changed stay
-as they are.
+turn again. Claude Code rewinds its own conversation to that point; Codex and
+Cursor can't, so they are told to set the old replies aside. Files the agent
+already changed stay as they are. Cursor resumes its own chat with `--resume`
+on the session id from the stream, so follow-ups keep that history.
 
 Sessions persist across dev-server restarts under
 `node_modules/.open-slide/agent-sessions.json`, and each one resumes the

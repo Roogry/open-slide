@@ -111,7 +111,7 @@ export function SlideCommandMenu({
         id: 'agent-panel',
         label: t.agent.openTitle,
         icon: <Sparkles />,
-        keywords: ['agent', 'claude', 'codex', 'chat', 'ai'],
+        keywords: ['agent', 'claude', 'codex', 'cursor', 'chat', 'ai'],
         shortcut: 'A',
         run: handlers.onToggleAgentPanel,
       });

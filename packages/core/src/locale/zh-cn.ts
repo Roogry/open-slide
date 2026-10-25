@@ -603,7 +603,12 @@ export const zhCN: Locale = {
     cliFoundNoVersion: '已找到 CLI',
     cliMissing: 'PATH 中找不到 CLI',
     cliHint: '请安装 {name} CLI 并登录一次；面板会复用它的登录状态。',
-    needCliTitle: '请先安装 Claude Code 或 Codex',
+    cliSignedOut: '尚未登录',
+    cliSignedOutHint: 'CLI 已安装。在终端登录一次即可，面板会复用该登录，不会要求填写 API key。',
+    cliOnlyReady: '使用 PATH 上的 {command} CLI，不会往这个工作区添加任何包。',
+    settingUnavailable: '{name} 不支持此设置',
+    approvalUnavailable: '{name} 的无头模式会直接应用修改和命令，因此这个开关不起作用。',
+    needCliTitle: '请先安装 Claude Code、Codex 或 Cursor',
     needCliDescription:
       '面板会驱动这台电脑上的 coding agent CLI，但 PATH 中找不到任何一个。请先安装其中一个并在终端登录一次，再重新检查。',
     checkAgain: '重新检查',

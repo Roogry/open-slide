@@ -616,7 +616,14 @@ export const es: Locale = {
     cliFoundNoVersion: 'CLI encontrada',
     cliMissing: 'CLI no encontrada en el PATH',
     cliHint: 'Instala la CLI de {name} e inicia sesión una vez; el panel reutiliza esa sesión.',
-    needCliTitle: 'Instala Claude Code o Codex primero',
+    cliSignedOut: 'Sin sesión',
+    cliSignedOutHint:
+      'La CLI está instalada. Inicia sesión una vez en una terminal; el panel reutiliza esa sesión y no pide una API key.',
+    cliOnlyReady: 'Usa la CLI {command} de tu PATH. No añade nada a este workspace.',
+    settingUnavailable: 'No disponible para {name}',
+    approvalUnavailable:
+      '{name} aplica ediciones y comandos directamente en modo headless, así que este interruptor no hace nada.',
+    needCliTitle: 'Instala Claude Code, Codex o Cursor primero',
     needCliDescription:
       'El panel dirige la CLI del agente de código de esta máquina y no se encontró ninguna en el PATH. Instala una, inicia sesión una vez en una terminal y vuelve a comprobar.',
     checkAgain: 'Volver a comprobar',

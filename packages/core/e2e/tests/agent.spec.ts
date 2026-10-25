@@ -4,7 +4,9 @@ import { openSlide } from './helpers.ts';
 type ProviderStatus = {
   id: string;
   name: string;
-  sdkPackage: string;
+  sdkPackage: string | null;
+  installCommand?: string;
+  disabledSettings?: string[];
   sdkVersion?: string | null;
   cliCommand: string;
   cliFound: boolean;
@@ -32,16 +34,21 @@ async function mockStatus(
 }
 
 test.describe('agent panel', () => {
-  test('status lists both providers and whether they are connected', async ({ request }) => {
+  test('status lists every provider and whether it is connected', async ({ request }) => {
     const res = await request.get('/__agent/status');
     expect(res.status()).toBe(200);
     const body = (await res.json()) as { enabled: boolean; providers: ProviderStatus[] };
     expect(body.enabled).toBe(true);
-    expect(body.providers.map((p) => p.id)).toEqual(['claude', 'codex']);
+    expect(body.providers.map((p) => p.id)).toEqual(['claude', 'codex', 'cursor']);
     const claude = body.providers[0];
     expect(claude.sdkPackage).toBe('@anthropic-ai/claude-agent-sdk');
     expect(claude.cliCommand).toBe('claude');
     expect(typeof claude.ready).toBe('boolean');
+    const cursor = body.providers[2];
+    expect(cursor.sdkPackage).toBeNull();
+    expect(['cursor-agent', 'agent']).toContain(cursor.cliCommand);
+    expect(cursor.installCommand).toContain('cursor.com/install');
+    expect(cursor.disabledSettings).toEqual(['effort', 'approval']);
   });
 
   test('sessions can be created, listed, read and deleted', async ({ request }) => {
@@ -96,7 +103,7 @@ test.describe('agent panel', () => {
       .toEqual(['user', 'error', 'result']);
 
     const final = (await (await request.get(`/__agent/sessions/${session.id}`)).json()) as Session;
-    expect(final.items[1].text).toContain(missing.sdkPackage);
+    expect(final.items[1].text).toContain(missing.sdkPackage ?? missing.cliCommand);
 
     const again = await request.post(`/__agent/sessions/${session.id}/respond`, {
       data: { itemId: final.items[1].id, allow: true },
@@ -136,10 +143,11 @@ test.describe('agent panel', () => {
     await page.keyboard.press('a');
     await expect(dock).toBeVisible();
     await expect(
-      dock.getByRole('heading', { name: 'Install Claude Code or Codex first' }),
+      dock.getByRole('heading', { name: 'Install Claude Code, Codex, or Cursor first' }),
     ).toBeVisible();
     await expect(dock.getByText('npm install -g @anthropic-ai/claude-code')).toBeVisible();
     await expect(dock.getByText('npm install -g @openai/codex')).toBeVisible();
+    await expect(dock.getByText('curl https://cursor.com/install -fsS | bash')).toBeVisible();
     expect(installs).toBe(0);
 
     await page.getByRole('button', { name: 'Close agent panel' }).click();
@@ -307,7 +315,9 @@ test.describe('agent panel', () => {
         json: {
           ...status,
           providers: status.providers.map((p) =>
-            p.id === 'claude' ? { ...p, ready: true } : { ...p, cliFound: false },
+            p.id === 'claude'
+              ? { ...p, ready: true }
+              : { ...p, cliFound: false, ready: false, signedIn: null },
           ),
         },
       }),
@@ -336,6 +346,10 @@ test.describe('agent panel', () => {
     );
     await menu.getByRole('tab', { name: 'Codex' }).click();
     await expect(menu.getByRole('button', { name: 'Connect' })).toBeVisible();
+    await menu.getByRole('tab', { name: 'Cursor' }).click();
+    await expect(
+      menu.getByText('Install the Cursor CLI and sign in once; the panel reuses its login.'),
+    ).toBeVisible();
     await page.keyboard.press('Escape');
     await expect(dock.getByRole('button', { name: 'Sonnet High' })).toBeVisible();
 

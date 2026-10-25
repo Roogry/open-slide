@@ -244,8 +244,9 @@ export function registerAgentRoutes(server: ViteDevServer, ctx: ApiContext): voi
         const body = (await readBody(req, AGENT_BODY_LIMIT)) as { provider?: unknown };
         if (!isAgentProviderId(body.provider)) return json(res, 400, { error: 'invalid provider' });
         const provider = providers[body.provider];
-        const pm = await detectPackageManager(ctx.userCwd);
         const pkg = provider.sdkPackage;
+        if (!pkg) return json(res, 400, { error: 'provider has no package to install' });
+        const pm = await detectPackageManager(ctx.userCwd);
         let install = installsInFlight.get(pkg);
         if (!install) {
           install = installSdk(pm, pkg, ctx.userCwd).finally(() => installsInFlight.delete(pkg));

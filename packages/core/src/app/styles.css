@@ -401,6 +401,11 @@
   --agent-b: oklch(0.7 0.14 240);
 }
 
+[data-agent-provider="cursor"] {
+  --agent-a: oklch(0.62 0.12 265);
+  --agent-b: oklch(0.78 0.08 230);
+}
+
 @keyframes agent-spin {
   to {
     --agent-angle: 360deg;

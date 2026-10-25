@@ -10,16 +10,15 @@ import {
 } from '@/lib/agent/use-agent';
 import { format, useLocale } from '@/lib/use-locale';
 import { cn } from '@/lib/utils';
-import type { AgentProviderId, AgentProviderStatus } from '../../../agent/types';
+import type { AgentProviderStatus } from '../../../agent/types';
 import { ProviderLogo } from './provider-logo';
-
-const CLI_INSTALL: Record<AgentProviderId, string> = {
-  claude: 'npm install -g @anthropic-ai/claude-code',
-  codex: 'npm install -g @openai/codex',
-};
 
 function needsCli(p: AgentProviderStatus): boolean {
   return !p.cliFound && !p.ready;
+}
+
+function signedOut(p: AgentProviderStatus): boolean {
+  return p.signedIn === false;
 }
 
 export function ConnectView() {
@@ -71,9 +70,14 @@ export function ConnectView() {
                   await installProvider(provider.id);
                   toast.success(format(t.agent.toastConnected, { name: provider.name }));
                 } catch (err) {
-                  toast.error(format(t.agent.toastConnectFailed, { pkg: provider.sdkPackage }), {
-                    description: err instanceof Error ? err.message : undefined,
-                  });
+                  toast.error(
+                    format(t.agent.toastConnectFailed, {
+                      pkg: provider.sdkPackage ?? provider.cliCommand,
+                    }),
+                    {
+                      description: err instanceof Error ? err.message : undefined,
+                    },
+                  );
                 }
               }}
             />
@@ -116,11 +120,14 @@ function ProviderCard({
 }) {
   const t = useLocale();
   const missing = needsCli(provider);
-  const cliLabel = provider.cliFound
-    ? provider.cliVersion
-      ? format(t.agent.cliFound, { version: provider.cliVersion })
-      : t.agent.cliFoundNoVersion
-    : t.agent.cliMissing;
+  const needsLogin = signedOut(provider);
+  const cliLabel = !provider.cliFound
+    ? t.agent.cliMissing
+    : needsLogin
+      ? t.agent.cliSignedOut
+      : provider.cliVersion
+        ? format(t.agent.cliFound, { version: provider.cliVersion })
+        : t.agent.cliFoundNoVersion;
 
   return (
     <div className="rounded-[8px] border border-border bg-card p-3 shadow-edge">
@@ -133,7 +140,9 @@ function ProviderCard({
           <p
             className={cn(
               'mt-0.5 flex items-center gap-1 text-[11px]',
-              provider.cliFound ? 'text-muted-foreground' : 'text-amber-600 dark:text-amber-400',
+              provider.cliFound && !needsLogin
+                ? 'text-muted-foreground'
+                : 'text-amber-600 dark:text-amber-400',
             )}
           >
             <Terminal className="size-3" aria-hidden />
@@ -150,7 +159,7 @@ function ProviderCard({
             <Loader2 className="size-3 animate-spin motion-reduce:animate-none" aria-hidden />
             {t.agent.connecting}
           </span>
-        ) : missing ? null : (
+        ) : missing || needsLogin ? null : (
           <Button
             size="sm"
             variant={error ? 'outline' : 'default'}
@@ -167,7 +176,16 @@ function ProviderCard({
             {format(t.agent.cliHint, { name: provider.name })}
           </p>
           <code className="block overflow-x-auto rounded-[5px] bg-muted px-2 py-1.5 font-mono text-[11px] whitespace-nowrap select-all">
-            {CLI_INSTALL[provider.id]}
+            {provider.installCommand}
+          </code>
+        </div>
+      ) : needsLogin ? (
+        <div className="mt-2.5 flex flex-col gap-1.5">
+          <p className="text-[11px] leading-relaxed text-muted-foreground">
+            {t.agent.cliSignedOutHint}
+          </p>
+          <code className="block overflow-x-auto rounded-[5px] bg-muted px-2 py-1.5 font-mono text-[11px] whitespace-nowrap select-all">
+            {`${provider.cliCommand} login`}
           </code>
         </div>
       ) : error && !installing ? (
@@ -175,8 +193,13 @@ function ProviderCard({
       ) : (
         <p className="mt-2 text-[11px] leading-relaxed text-muted-foreground">
           {provider.ready
-            ? `${provider.sdkPackage} v${provider.sdkVersion}`
-            : format(t.agent.connectInstallHint, { pkg: provider.sdkPackage, pm: packageManager })}
+            ? provider.sdkPackage
+              ? `${provider.sdkPackage} v${provider.sdkVersion}`
+              : format(t.agent.cliOnlyReady, { command: provider.cliCommand })
+            : format(t.agent.connectInstallHint, {
+                pkg: provider.sdkPackage ?? provider.cliCommand,
+                pm: packageManager,
+              })}
         </p>
       )}
     </div>

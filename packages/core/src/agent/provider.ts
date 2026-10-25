@@ -1,5 +1,11 @@
 import path from 'node:path';
-import type { AgentEffort, AgentModelOption, AgentProviderId, AgentQuestion } from './types.ts';
+import type {
+  AgentDisabledSetting,
+  AgentEffort,
+  AgentModelOption,
+  AgentProviderId,
+  AgentQuestion,
+} from './types.ts';
 
 export type ProviderEvent =
   | { type: 'session-id'; id: string }
@@ -35,21 +41,34 @@ export type ProviderRunOptions = {
   requestPermission: (request: PermissionRequest) => Promise<boolean>;
 };
 
+export type LocatedCli = { command: string; file: string };
+
 export interface AgentProvider {
   id: AgentProviderId;
   name: string;
-  sdkPackage: string;
+  // Null when the provider is the CLI itself and installs nothing into the workspace.
+  sdkPackage: string | null;
   cliCommand: string;
+  installCommand: string;
+  installCommandWindows?: string;
   askInstruction: string;
   canRewind: boolean;
-  models(): Promise<AgentModelOption[]>;
+  disabledSettings: readonly AgentDisabledSetting[];
+  // Overrides PATH lookup when the binary has more than one name.
+  locateCli?: () => LocatedCli | null;
+  // CLI-only providers report sign-in here. SDK providers leave it unset.
+  signedIn?: (cli: LocatedCli) => Promise<boolean>;
+  // `cli` is set when the binary was found, so a provider can ask it for its model list.
+  models(cli?: LocatedCli | null): Promise<AgentModelOption[]>;
   run(opts: ProviderRunOptions): Promise<void>;
 }
 
 export class ProviderUnavailableError extends Error {
   constructor(provider: AgentProvider) {
     super(
-      `${provider.name} is not connected: install ${provider.sdkPackage} in this workspace to use it from the agent panel.`,
+      provider.sdkPackage
+        ? `${provider.name} is not connected: install ${provider.sdkPackage} in this workspace to use it from the agent panel.`
+        : `${provider.name} is not connected: install the ${provider.cliCommand} CLI and sign in to use it from the agent panel.`,
     );
     this.name = 'ProviderUnavailableError';
   }
