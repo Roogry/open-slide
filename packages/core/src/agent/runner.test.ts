@@ -9,8 +9,10 @@ function fakeProvider(run: AgentProvider['run'], canRewind = true): AgentProvide
     name: 'Fake',
     sdkPackage: 'fake',
     cliCommand: 'fake',
+    installCommand: 'install fake',
     askInstruction: 'Ask with the fake tool.',
     canRewind,
+    disabledSettings: [],
     models: async () => [],
     run,
   };
@@ -39,7 +41,7 @@ function setup(run: AgentProvider['run'], onTurnEnd?: (turn: TurnEnd) => void, c
     userCwd: '/ws',
     writableRoots: ['/ws/slides'],
     store,
-    providers: { claude: provider, codex: provider },
+    providers: { claude: provider, codex: provider, cursor: provider },
     onTurnEnd,
   });
   return { store, runner };

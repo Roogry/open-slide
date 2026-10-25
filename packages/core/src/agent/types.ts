@@ -1,4 +1,4 @@
-export const AGENT_PROVIDER_IDS = ['claude', 'codex'] as const;
+export const AGENT_PROVIDER_IDS = ['claude', 'codex', 'cursor'] as const;
 
 export type AgentProviderId = (typeof AGENT_PROVIDER_IDS)[number];
 
@@ -21,16 +21,27 @@ export type AgentModelOption = {
   efforts: AgentEffort[];
 };
 
+// Panel controls a provider cannot honor. They stay visible and disabled.
+export const AGENT_DISABLED_SETTINGS = ['effort', 'approval'] as const;
+
+export type AgentDisabledSetting = (typeof AGENT_DISABLED_SETTINGS)[number];
+
 export type AgentProviderStatus = {
   id: AgentProviderId;
   name: string;
-  sdkPackage: string;
+  // Null when the provider is the CLI itself and installs nothing into the workspace.
+  sdkPackage: string | null;
   sdkVersion: string | null;
   cliCommand: string;
   cliFound: boolean;
   cliVersion: string | null;
+  // Command shown when the CLI is missing. Chosen for the dev server's platform.
+  installCommand: string;
+  // Null when this provider does not check a separate sign-in (the SDK reuses the CLI login).
+  signedIn: boolean | null;
   ready: boolean;
   models: AgentModelOption[];
+  disabledSettings: AgentDisabledSetting[];
 };
 
 export type AgentStatus = {

@@ -26,9 +26,19 @@ function OpenAILogo(props: SVGProps<SVGSVGElement>) {
   );
 }
 
+function CursorLogo(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" {...props}>
+      <path d="M12.4 2.2 3.2 7.1v9.8l9.2 4.9 9.2-4.9V7.1l-9.2-4.9Zm0 2.3 6.6 3.5-6.6 3.5-6.6-3.5 6.6-3.5ZM5.2 9.6l6.2 3.3v6.6l-6.2-3.3V9.6Zm8 9.9v-6.6l6.2-3.3v6.6l-6.2 3.3Z" />
+    </svg>
+  );
+}
+
 export function ProviderLogo({
   provider,
   ...props
 }: { provider: AgentProviderId } & SVGProps<SVGSVGElement>) {
-  return provider === 'claude' ? <ClaudeLogo {...props} /> : <OpenAILogo {...props} />;
+  if (provider === 'claude') return <ClaudeLogo {...props} />;
+  if (provider === 'cursor') return <CursorLogo {...props} />;
+  return <OpenAILogo {...props} />;
 }

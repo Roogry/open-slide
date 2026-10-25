@@ -607,7 +607,14 @@ export const en: Locale = {
     cliFoundNoVersion: 'CLI found',
     cliMissing: 'CLI not found on PATH',
     cliHint: 'Install the {name} CLI and sign in once; the panel reuses its login.',
-    needCliTitle: 'Install Claude Code or Codex first',
+    cliSignedOut: 'Not signed in',
+    cliSignedOutHint:
+      'The CLI is installed. Sign in once in a terminal; the panel reuses that login and never asks for an API key.',
+    cliOnlyReady: 'Uses the {command} CLI on your PATH. Nothing is added to this workspace.',
+    settingUnavailable: 'Not available for {name}',
+    approvalUnavailable:
+      '{name} applies edits and shell commands directly in headless mode, so this switch has no effect.',
+    needCliTitle: 'Install Claude Code, Codex, or Cursor first',
     needCliDescription:
       'The panel drives the coding agent CLI on this machine, and none was found on your PATH. Install one, sign in once in a terminal, then check again.',
     checkAgain: 'Check again',

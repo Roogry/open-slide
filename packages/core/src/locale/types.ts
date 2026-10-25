@@ -652,6 +652,14 @@ export type Locale = {
     cliMissing: string;
     /** template: "Install the {name} CLI and sign in once; the panel reuses its login." */
     cliHint: string;
+    cliSignedOut: string;
+    cliSignedOutHint: string;
+    /** template: "Uses the {command} CLI on your PATH. Nothing is added to this workspace." */
+    cliOnlyReady: string;
+    /** template: "Not available for {name}" */
+    settingUnavailable: string;
+    /** template: "{name} applies edits and shell commands directly in headless mode, so this switch has no effect." */
+    approvalUnavailable: string;
     needCliTitle: string;
     needCliDescription: string;
     checkAgain: string;
